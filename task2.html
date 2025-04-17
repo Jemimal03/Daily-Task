@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>To-Do List</title>
+  <!-- Google Font for unique style -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome for Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background-color: #fef7d4; /* Soft yellow background for a cute feel */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .todo-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      width: 320px;
+      background-color: #fff3e0; /* Soft peach color */
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #ff6f61; /* Cute coral color */
+      font-size: 2rem;
+    }
+
+    .input-section {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ffb6b9;
+      margin-right: 10px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #ff6f61; /* Cute coral color */
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background-color: #ff4f3f;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    li {
+      background: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1rem;
+      background-color: #ffe0e0; /* Soft pink for tasks */
+    }
+
+    li.completed {
+      text-decoration: line-through;
+      color: #777;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px; /* Adds space between the buttons */
+      align-items: center;
+    }
+
+    .delete-btn, .edit-btn {
+      background: #ff6f61;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .edit-btn {
+      background-color: #ffb6b9;
+    }
+
+    .edit-label {
+      font-size: 0.9rem;
+      color: #ff4f3f;
+      margin-left: 10px;
+    }
+
+    .fa {
+      margin-right: 5px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="todo-container">
+    <h1>✨ To-Do List</h1>
+    <div class="input-section">
+      <input type="text" id="taskInput" placeholder="Add a new task...">
+      <button onclick="addTask()">Submit</button>
+    </div>
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    function addTask() {
+      const input = document.getElementById("taskInput");
+      const taskText = input.value.trim();
+      
+      if (taskText === "") {
+        alert("Please enter a task!");
+        return;
+      }
+
+      const li = document.createElement("li");
+      li.textContent = taskText;
+
+      const editBtn = document.createElement("button");
+      editBtn.className = "edit-btn";
+      editBtn.innerHTML = '<i class="fas fa-edit"></i>Edit'; // Font Awesome Edit Icon
+      editBtn.onclick = () => updateTask(li);
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.innerHTML = '<i class="fas fa-trash"></i>Delete'; // Font Awesome Delete Icon
+      deleteBtn.onclick = () => li.remove();
+
+      const buttonContainer = document.createElement("div");
+      buttonContainer.className = "button-container";
+      buttonContainer.appendChild(editBtn);
+      buttonContainer.appendChild(deleteBtn);
+
+      const editLabel = document.createElement("span");
+      editLabel.className = "edit-label";
+      editLabel.style.display = "none"; // Hide edit label initially
+
+      li.addEventListener("click", () => {
+        li.classList.toggle("completed");
+      });
+
+      li.appendChild(buttonContainer);
+      li.appendChild(editLabel);
+      document.getElementById("taskList").appendChild(li);
+
+      input.value = "";
+    }
+
+    function updateTask(li) {
+      const newTask = prompt("Edit your task:", li.textContent.replace("EditDelete", "").trim());
+      const editLabel = li.querySelector(".edit-label");
+
+      if (newTask !== null && newTask !== "") {
+        li.firstChild.textContent = newTask;
+        editLabel.textContent = "(Edited)";
+        editLabel.style.display = "inline"; // Show edit label
+      }
+    }
+  </script>
+</body>
+</html>
+
+

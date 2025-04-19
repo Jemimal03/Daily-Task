@@ -1,0 +1,48 @@
+(async function () {
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const openAndSelect = async (filterId, optionText) => {
+    const button = document.getElementById(filterId);
+    if (!button) {
+      console.warn(`❌ Filter button "${filterId}" not found.`);
+      return;
+    }
+
+    button.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    button.click();
+    console.log(`👉 Opened filter: ${filterId}`);
+
+    await wait(300); // Wait for dropdown to appear
+
+    let retries = 0;
+    let selected = false;
+
+    while (retries < 10 && !selected) {
+      const options = [...document.querySelectorAll('li span, li div span')];
+      const match = options.find(opt => opt.textContent.trim().toLowerCase() === optionText.toLowerCase());
+
+      if (match) {
+        match.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        match.click();
+        console.log(`✅ Selected: "${optionText}" in ${filterId}`);
+        selected = true;
+      } else {
+        await wait(200);
+        retries++;
+      }
+    }
+
+    if (!selected) {
+      console.warn(`❌ Option "${optionText}" not found in ${filterId}`);
+    }
+  };
+
+  // Run the filter steps in sequence
+  await openAndSelect("searchFilter_sortBy", "Latest");
+  await wait(1000);
+
+  await openAndSelect("searchFilter_datePosted", "Past Month");
+  await wait(1000);
+
+  await openAndSelect("searchFilter_contentType", "Videos");
+})();

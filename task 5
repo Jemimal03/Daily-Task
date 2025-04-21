@@ -1,0 +1,111 @@
+(async function () {
+  // Filter Mapping
+  const filterMapping = {
+    'Latest': { 'Sort_by': 'Latest' },
+    'Past month': { 'Date_posted': 'Past month' },
+    'Images': { 'Content_type': 'Images' },
+    'People you follow': { 'Posted_by': 'People you follow' }
+  };
+
+  // Key-Value Pairs (Text Filters)
+  const keyValuePairs = [
+    { field: 'From member', value: 'Anders Bobert' },
+    { field: 'From company', value: 'Arkitekturfotograf' },
+    { field: 'Mentioning member', value: 'Anders Bobert' },
+    { field: 'Mentioning company', value: 'Arkitekturfotograf' },
+    { field: 'Author industry', value: 'Arkitekturfotograf' },
+    { field: 'Author company', value: 'Arkitekturfotograf' },
+    { field: 'Author Keywords', value: 'chat' }
+  ];
+
+  // Delay function
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Click any visible filter option by text
+  const clickOption = async (text) => {
+    const element = [...document.querySelectorAll('*')]
+      .find(el =>
+        el.textContent.trim().toLowerCase() === text.toLowerCase() &&
+        el.offsetParent !== null
+      );
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.click();
+      console.log(`✅ Selected: ${text}`);
+    } else {
+      console.warn(`❌ Not found or not clickable: ${text}`);
+    }
+    await delay(800);
+  };
+
+  // Open "All filters"
+  const openFilters = async () => {
+    const btn = [...document.querySelectorAll('button')].find(b =>
+      b.innerText.includes("All filters") || b.getAttribute("aria-label")?.includes("All filters")
+    );
+    if (btn) {
+      btn.click();
+      console.log("✅ Opened: All filters");
+    } else {
+      console.warn("❌ 'All filters' button not found");
+    }
+    await delay(1500);
+  };
+
+  // Apply filters
+  const applyClickableFilters = async () => {
+    for (const filterName of Object.keys(filterMapping)) {
+      console.log(`🔍 Applying: ${filterName}`);
+      await clickOption(filterName);
+    }
+  };
+
+  // Fill text filters
+  const fillTextFilters = async () => {
+    for (const { field, value } of keyValuePairs) {
+      const inputs = [...document.querySelectorAll('input[type="text"], input[type="search"]')];
+      const input = inputs.find(input =>
+        (input.placeholder && input.placeholder.toLowerCase().includes(field.toLowerCase())) ||
+        (input.closest('label') && input.closest('label').textContent.toLowerCase().includes(field.toLowerCase()))
+      );
+
+      if (input) {
+        input.focus();
+        input.value = value;
+        ['input', 'change'].forEach(evt =>
+          input.dispatchEvent(new Event(evt, { bubbles: true }))
+        );
+        console.log(`✅ Filled ${field}: ${value}`);
+      } else {
+        console.warn(`❌ Input field not found for: ${field}`);
+      }
+
+      await delay(1000);
+    }
+  };
+
+  // Click "Show results"
+  const clickShowResults = async () => {
+    await delay(2000);
+    const btn = [...document.querySelectorAll('button')]
+      .find(b => b.textContent.trim().toLowerCase() === 'show results');
+    if (btn) {
+      btn.click();
+      console.log('✅ Clicked "Show results"');
+    } else {
+      console.warn('❌ "Show results" button not found');
+    }
+  };
+
+  // Main runner
+  const run = async () => {
+    await openFilters();
+    await applyClickableFilters();
+    await fillTextFilters();
+    await clickShowResults();
+  };
+
+  // Execute
+  await run();
+
+})();

@@ -3,27 +3,51 @@
 
   const filters = {
     sortBy: "Latest",
-    datePosted: "Past week",
+    datePosted: "Past month",
     contentType: "Images",
     postedBy: "People you follow",
-    fromMembers: ["Vinayak Patil"],
-    fromCompanies: ["Time Clicker"]
+    fromMembers: ["Alvin Foo"],
+    fromCompanies: ["Zero2Launch"]
   };
 
-  // 1. Open "All filters" panel
-  document.querySelector('button[aria-label*="Show all filters"]')?.click();
-  await sleep(1500);
+  // 1. Open "All filters" panel and clear previous filters if any
+  const openFiltersPanel = () => {
+    const filterBtn = document.querySelector('button[aria-label*="Show all filters"]');
+    if (filterBtn) {
+      filterBtn.click();
+      console.log("🟢 Opened filters panel");
+      return true;
+    } else {
+      console.warn("❌ Filters button not found");
+      return false;
+    }
+  };
+  const clearFilters = async () => {
+    const clearBtns = [...document.querySelectorAll('button')].filter(b => /clear/i.test(b.innerText));
+    for (const btn of clearBtns) {
+      btn.click();
+      console.log("🔄 Cleared filter");
+      await sleep(1000); // Wait for filter reset
+    }
+  };
+  if (!openFiltersPanel()) return;
 
-  // 2. Apply checkbox filters
+  await sleep(1500);
+  await clearFilters();
+
+  // 2. Apply checkbox filters with error handling
   async function applyCheckbox(group, option) {
-    const fs = [...document.querySelectorAll('fieldset')].find(f => f.innerText.includes(group));
-    if (!fs) return console.warn(`❌ Fieldset not found: ${group}`);
-    const lbl = [...fs.querySelectorAll('label')].find(l => l.innerText.includes(option));
-    if (lbl) {
+    try {
+      const fs = [...document.querySelectorAll('fieldset')].find(f => f.innerText.includes(group));
+      if (!fs) throw new Error(`Fieldset for "${group}" not found`);
+
+      const lbl = [...fs.querySelectorAll('label')].find(l => l.innerText.includes(option));
+      if (!lbl) throw new Error(`Option "${option}" not found in "${group}"`);
+
       lbl.click();
       console.log(`✅ Selected "${option}" in "${group}"`);
-    } else {
-      console.warn(`❌ Option not found: ${option} in ${group}`);
+    } catch (error) {
+      console.warn(`❌ ${error.message}`);
     }
     await sleep(1000);
   }
@@ -36,7 +60,8 @@
   // 3. Enhanced search field handler with typing effect
   async function applySearchField(ariaLabel, values, triggerText) {
     if (triggerText) {
-      const triggerBtn = [...document.querySelectorAll('button')].find(b => b.innerText.trim() === triggerText);
+      const triggerBtn = [...document.querySelectorAll('button')]
+        .find(b => b.innerText.trim() === triggerText);
       if (triggerBtn) {
         triggerBtn.click();
         console.log(`🟢 Clicked trigger: "${triggerText}"`);
@@ -45,79 +70,85 @@
     }
 
     for (const value of values) {
-      let input = document.querySelector(`input[aria-label="${ariaLabel}"]`);
+      let input = document.querySelector(`[aria-label="${ariaLabel}"]`);
       if (!input) {
         console.warn(`❌ Input with aria-label "${ariaLabel}" not found`);
         continue;
       }
 
-      // Focus and clear
+      // Focus and clear field
       input.focus();
       input.value = '';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       await sleep(300);
 
-      // Simulate typing
+      // Type the complete value at once (shows as typing)
       for (let i = 0; i < value.length; i++) {
         input.value = value.substring(0, i + 1);
         input.dispatchEvent(new Event('input', { bubbles: true }));
-        await sleep(100);
+        await sleep(50);  // Reduce sleep time for faster typing
       }
-
       console.log(`⌨ Finished typing: "${value}"`);
-      await sleep(1200);
+      await sleep(1000); // Wait for suggestions
 
-      // Suggestion selectors
+      // Select first suggestion
       const suggestionSelectors = [
-        '[role="listbox"] li',
-        '[role="option"]',
-        '.autocomplete-item',
-        '.basic-typeahead__option',
-        'span.t-14.t-black--light.t-normal[aria-hidden="true"]'
+        '[role="listbox"] li:first-child',
+        '[role="option"]:first-child',
+        '.autocomplete-item:first-child',
+        '.basic-typeahead__option:first-child'
       ];
 
-      let suggestion = null;
+      let suggestion;
       for (const selector of suggestionSelectors) {
-        const match = [...document.querySelectorAll(selector)]
-          .find(el => el.textContent.trim().toLowerCase() === value.toLowerCase());
-        if (match) {
-          suggestion = match;
-          break;
-        }
+        suggestion = document.querySelector(selector);
+        if (suggestion) break;
       }
 
       if (suggestion) {
         suggestion.scrollIntoView({ block: 'center' });
         await sleep(300);
         suggestion.click();
-        console.log(`✅ Selected suggestion for "${value}"`);
+        console.log(`✅ Selected first suggestion for "${value}"`);
       } else {
-        console.warn(`❌ No suggestion matched "${value}"`);
+        console.warn(`❌ No suggestions found for "${value}"`);
       }
 
       await sleep(1000);
     }
   }
 
-  // 4. Apply From Members and From Companies
-  await applySearchField("Add a person's name", filters.fromMembers, "Add a person's name");
-  await applySearchField("Add a company's name", filters.fromCompanies, "Add a company's name");
+  // 4. Apply From Members and From Companies with retry logic
+  const retry = async (fn, retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        await fn();
+        return; // If successful, break the loop
+      } catch (err) {
+        console.warn(`❌ Attempt ${i + 1} failed: ${err.message}`);
+        if (i < retries - 1) await sleep(delay);
+      }
+    }
+  };
 
-  // 5. Confirm selections
+  await retry(() => applySearchField("Add a person's name", filters.fromMembers, "Add a person's name"));
+  await retry(() => applySearchField("Add a company's name", filters.fromCompanies, "Add a company's name"));
+
+  // 5. Confirm selections and handle missing selections
   const selectedTexts = [...document.querySelectorAll('span.t-14.t-black--light.t-normal[aria-hidden="true"]')]
     .map(span => span.textContent.trim());
 
   console.log("🧾 Confirmed Selections:");
   filters.fromMembers.forEach(name => {
     if (selectedTexts.find(t => t.includes(name))) console.log(`👤 From Member: ${name}`);
-    else console.warn(`⚠️ Not selected: ${name}`);
+    else console.warn(`❌ Member "${name}" not selected`);
   });
   filters.fromCompanies.forEach(name => {
     if (selectedTexts.find(t => t.includes(name))) console.log(`🏢 From Company: ${name}`);
-    else console.warn(`⚠️ Not selected: ${name}`);
+    else console.warn(`❌ Company "${name}" not selected`);
   });
 
-  // 6. Click Show Results
+  // 6. Click Show Results with error handling
   const showBtn = [...document.querySelectorAll('button')].find(b => /show results/i.test(b.innerText));
   if (showBtn) {
     showBtn.click();
@@ -126,3 +157,4 @@
     console.warn("❌ Show results button not found");
   }
 })();
+

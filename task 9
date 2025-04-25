@@ -1,0 +1,23 @@
+manifest.json (code)
+{
+    "manifest_version": 3,
+    "name": "Cat to YouTube",
+    "version": "1.0",
+    "description": "Click the cat icon to go to YouTube.",
+    "action": {
+      "default_icon": {
+        "128": "cat.png"
+      }
+    },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "permissions": ["tabs"]
+  }
+  
+background.js (code)
+
+chrome.action.onClicked.addListener((tab) => {
+    chrome.tabs.create({ url: "https://www.youtube.com" });
+  });
+  

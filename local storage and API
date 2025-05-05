@@ -1,0 +1,69 @@
+{
+  "manifest_version": 3,
+  "name": "OpenRouter Q&A",
+  "version": "1.0",
+  "description": "Ask OpenRouter any question",
+  "permissions": [],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "cat.png"
+    }
+  }
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ask OpenRouter</title>
+  <style>
+    body { font-family: Arial, sans-serif; width: 300px; padding: 10px; }
+    textarea { width: 100%; height: 60px; }
+    button { margin-top: 10px; padding: 5px 10px; }
+    #response { margin-top: 15px; white-space: pre-wrap; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h3>Ask OpenRouter</h3>
+  <textarea id="question" placeholder="Type your question..."></textarea>
+  <button id="ask">Ask</button>
+  <div id="response"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
+
+document.getElementById("ask").addEventListener("click", async () => {
+  const question = document.getElementById("question").value.trim();
+  const responseDiv = document.getElementById("response");
+
+  if (!question) {
+    responseDiv.textContent = "Please type a question.";
+    return;
+  }
+
+  responseDiv.textContent = "Thinking...";
+
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer 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"
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-3.5-turbo",
+        messages: [{ role: "user", content: question }]
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.choices && data.choices[0]?.message?.content) {
+      responseDiv.textContent = data.choices[0].message.content;
+    } else {
+      responseDiv.textContent = "No response from the API.";
+    }
+  } catch (error) {
+    responseDiv.textContent = "Error: " + error.message;
+  }
+});
